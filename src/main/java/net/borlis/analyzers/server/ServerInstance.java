@@ -63,7 +63,22 @@ public class ServerInstance implements Callable<Server> {
             URL location = protectionDomain.getCodeSource().getLocation();
             context.setWar(location.toExternalForm());
             server.setHandler(context);
-            server.start();
+            while (true) {
+                try {
+                    server.start();
+                    break;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            try {
+                System.in.read();
+                server.stop();
+                server.join();
+            } catch (Exception e) {
+                e.printStackTrace();
+                System.exit(100);
+            }
             return server.getURI() + " " + server.getState();
         } catch (Throwable throwable) {
             throwable.printStackTrace();
@@ -71,7 +86,7 @@ public class ServerInstance implements Callable<Server> {
         }
     }
 
-    private String stop() {
+    public String stop() {
         try {
             server.stop();
             return server.getURI() + " " + server.getState();
@@ -83,8 +98,8 @@ public class ServerInstance implements Callable<Server> {
 
 
     public Server call() throws Exception {
-        if (!server.getState().equals("STARTED") || !server.getState().equals("STARTING")) {
-            server.start();
+        if (server == null || !server.getState().equals("STARTED") || !server.getState().equals("STARTING")) {
+            start();
         }
         return server;
     }
